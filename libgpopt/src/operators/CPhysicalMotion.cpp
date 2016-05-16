@@ -72,7 +72,7 @@ CPhysicalMotion::FValidContext
 	{
 		// required distribution is compatible with the distribution delivered by Motion and its child plan,
 		// in this case, Motion is redundant since child plan delivers the required distribution
-		return false;
+		return true;
 	}
 
 	return true;

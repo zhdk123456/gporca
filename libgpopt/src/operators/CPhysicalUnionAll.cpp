@@ -96,6 +96,28 @@ CPhysicalUnionAll::~CPhysicalUnionAll()
 	m_pdrgpcrsInput->Release();
 }
 
+static
+CDistributionSpecHashed *
+BuildDistribution
+(
+		IMemoryPool *pmp,
+		DrgPcr * pdrgpcr,
+		ULONG ulCols
+)
+{
+	DrgPexpr *pdrgpexpr = GPOS_NEW(pmp) DrgPexpr(pmp);
+	for (ULONG ulCol = 0; ulCol < ulCols; ulCol++)
+	{
+		CExpression *pexpr = CUtils::PexprScalarIdent(pmp, (*pdrgpcr)[ulCol]);
+		pdrgpexpr->Append(pexpr);
+	}
+
+	// create a hashed distribution on input columns of the current child
+	CDistributionSpecHashed *pdshashed = GPOS_NEW(pmp) CDistributionSpecHashed(pdrgpexpr, true /*fNullsColocated*/);
+
+	return pdshashed;
+}
+
 //---------------------------------------------------------------------------
 //	@function:
 //		CPhysicalUnionAll::BuildHashedDistributions
@@ -122,20 +144,11 @@ CPhysicalUnionAll::BuildHashedDistributions
 	const ULONG ulArity = m_pdrgpdrgpcrInput->UlLength();
 	for (ULONG ulChild = 0; ulChild < ulArity; ulChild++)
 	{
-		DrgPcr *pdrgpcr = (*m_pdrgpdrgpcrInput)[ulChild];
-		DrgPexpr *pdrgpexpr = GPOS_NEW(pmp) DrgPexpr(pmp);
-		for (ULONG ulCol = 0; ulCol < ulCols; ulCol++)
-		{
-			CExpression *pexpr = CUtils::PexprScalarIdent(pmp, (*pdrgpcr)[ulCol]);
-			pdrgpexpr->Append(pexpr);
-		}
-
 		// create a hashed distribution on input columns of the current child
-		CDistributionSpecHashed *pdshashed = GPOS_NEW(pmp) CDistributionSpecHashed(pdrgpexpr, true /*fNullsColocated*/);
+		CDistributionSpecHashed *pdshashed = BuildDistribution(pmp, (*m_pdrgpdrgpcrInput)[ulChild], ulCols);
 		m_pdrgpds->Append(pdshashed);
 	}
 }
-
 
 //---------------------------------------------------------------------------
 //	@function:
@@ -514,14 +527,15 @@ CPhysicalUnionAll::PdsRequired
 		return pds;
 	}
 
+	// attempt passing requested hashed distribution to children
+	CDistributionSpecHashed *pdshashed = BuildDistribution(pmp, (*m_pdrgpdrgpcrInput)[ulChildIndex], m_pdrgpcrOutput->UlLength());
+	if (NULL != pdshashed)
+	{
+		return pdshashed;
+	}
+
 	if (0 == ulOptReq && CDistributionSpec::EdtHashed == pdsRequired->Edt())
 	{
-		// attempt passing requested hashed distribution to children
-		CDistributionSpecHashed *pdshashed = PdshashedPassThru(pmp, CDistributionSpecHashed::PdsConvert(pdsRequired), ulChildIndex);
-		if (NULL != pdshashed)
-		{
-			return pdshashed;
-		}
 	}
 
 	if (0 == ulChildIndex)
@@ -942,7 +956,7 @@ CPhysicalUnionAll::EpetDistribution
 	if (ped->FCompatible(pds))
 	{
 		 // required distribution is already provided
-		 return CEnfdProp::EpetUnnecessary;
+		 return CEnfdProp::EpetRequired;
 	}
 
 	return CEnfdProp::EpetRequired;

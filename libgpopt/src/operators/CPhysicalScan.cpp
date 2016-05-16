@@ -234,7 +234,7 @@ CPhysicalScan::EpetDistribution
 {
 	GPOS_ASSERT(NULL != ped);
 
-	if (ped->FCompatible(m_pds))
+	if (CDistributionSpec::EdtAny == ped->PdsRequired()->Edt())
 	{
 		// required distribution will be established by the operator
 		return CEnfdProp::EpetUnnecessary;
