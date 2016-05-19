@@ -20,6 +20,7 @@
 #include "gpopt/base/CDistributionSpecAny.h"
 #include "gpopt/base/CDistributionSpecSingleton.h"
 #include "gpopt/base/CDistributionSpecHashed.h"
+#include "gpopt/base/CDistributionSpecStrictHashed.h"
 #include "gpopt/base/CDistributionSpecReplicated.h"
 #include "gpopt/base/CDistributionSpecRandom.h"
 #include "gpopt/base/CDistributionSpecNonSingleton.h"
@@ -97,7 +98,7 @@ CPhysicalUnionAll::~CPhysicalUnionAll()
 }
 
 static
-CDistributionSpecHashed *
+CDistributionSpecStrictHashed *
 BuildDistribution
 (
 		IMemoryPool *pmp,
@@ -113,7 +114,7 @@ BuildDistribution
 	}
 
 	// create a hashed distribution on input columns of the current child
-	CDistributionSpecHashed *pdshashed = GPOS_NEW(pmp) CDistributionSpecHashed(pdrgpexpr, true /*fNullsColocated*/);
+	CDistributionSpecStrictHashed *pdshashed = GPOS_NEW(pmp) CDistributionSpecStrictHashed(pdrgpexpr, true /*fNullsColocated*/);
 
 	return pdshashed;
 }
@@ -436,7 +437,7 @@ CPhysicalUnionAll::PdsMatching
 //		Compute required hashed distribution of the n-th child
 //
 //---------------------------------------------------------------------------
-CDistributionSpecHashed *
+CDistributionSpecStrictHashed *
 CPhysicalUnionAll::PdshashedPassThru
 	(
 	IMemoryPool *pmp,
@@ -480,7 +481,7 @@ CPhysicalUnionAll::PdshashedPassThru
 
 	if (0 < pdrgpexprChildRequired->UlLength())
 	{
-		return GPOS_NEW(pmp) CDistributionSpecHashed(pdrgpexprChildRequired, true /* fNullsCollocated */);
+		return GPOS_NEW(pmp) CDistributionSpecStrictHashed(pdrgpexprChildRequired, true /* fNullsCollocated */);
 	}
 
 	// failed to create a matching hashed distribution
@@ -527,15 +528,23 @@ CPhysicalUnionAll::PdsRequired
 		return pds;
 	}
 
-	// attempt passing requested hashed distribution to children
-	CDistributionSpecHashed *pdshashed = BuildDistribution(pmp, (*m_pdrgpdrgpcrInput)[ulChildIndex], m_pdrgpcrOutput->UlLength());
-	if (NULL != pdshashed)
+	if (0 == ulOptReq)
 	{
-		return pdshashed;
-	}
+		CDistributionSpecStrictHashed *pdshashed = NULL;
 
-	if (0 == ulOptReq && CDistributionSpec::EdtHashed == pdsRequired->Edt())
-	{
+		if (CDistributionSpec::EdtHashed == pdsRequired->Edt())
+		{
+			// attempt passing requested hashed distribution to children
+			pdshashed = PdshashedPassThru(pmp, CDistributionSpecHashed::PdsConvert(pdsRequired), ulChildIndex);
+		}else {
+			// attempt passing requested hashed distribution to children
+			pdshashed = BuildDistribution(pmp, (*m_pdrgpdrgpcrInput)[ulChildIndex], m_pdrgpcrOutput->UlLength());
+		}
+
+		if (NULL != pdshashed)
+		{
+			return pdshashed;
+		}
 	}
 
 	if (0 == ulChildIndex)
@@ -956,7 +965,7 @@ CPhysicalUnionAll::EpetDistribution
 	if (ped->FCompatible(pds))
 	{
 		 // required distribution is already provided
-		 return CEnfdProp::EpetRequired;
+		 return CEnfdProp::EpetUnnecessary;
 	}
 
 	return CEnfdProp::EpetRequired;

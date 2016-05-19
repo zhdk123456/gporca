@@ -71,12 +71,14 @@ namespace gpopt
 				return (m_fDuplicateSensitive || !pds->m_fDuplicateSensitive);
 			}
 
-			// exact match against given hashed distribution
-			BOOL FMatchHashedDistribution(const CDistributionSpecHashed *pdshashed) const;
 
 			// private copy ctor
 			CDistributionSpecHashed(const CDistributionSpecHashed &);
-			
+
+		protected:
+			// exact match against given hashed distribution
+			BOOL FMatchHashedDistribution(const CDistributionSpecHashed *pdshashed) const;
+
 		public:
 		
 			// ctor

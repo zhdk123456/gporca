@@ -422,7 +422,6 @@ CDistributionSpecHashed::FMatchHashedDistribution
 	return true;
 }
 
-
 //---------------------------------------------------------------------------
 //	@function:
 //		CDistributionSpecHashed::FMatch
@@ -445,11 +444,13 @@ CDistributionSpecHashed::FMatch
 
 	const CDistributionSpecHashed *pdshashed = CDistributionSpecHashed::PdsConvert(pds);
 
+	// comparing join condition if this is not null
 	if (NULL != m_pdshashedEquiv && m_pdshashedEquiv->FMatch(pdshashed))
 	{
 		return true;
 	 }
 
+	// comparing join condition if pds is not null
 	if (NULL != pdshashed->PdshashedEquiv() && pdshashed->PdshashedEquiv()->FMatch(this))
 	{
 		return true;
