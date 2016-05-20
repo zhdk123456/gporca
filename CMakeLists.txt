@@ -7,6 +7,8 @@ set(GPORCA_VERSION_MAJOR 1)
 set(GPORCA_VERSION_MINOR 636)
 set(GPORCA_VERSION_STRING ${GPORCA_VERSION_MAJOR}.${GPORCA_VERSION_MINOR})
 
+set(CMAKE_CXX_STANDARD 11)
+
 # Whenever an ABI-breaking change is made to GPORCA, this should be incremented.
 # ABI changes include removing functions, and adding or removing function
 # parameters. Because GPORCA is a C++ library, there are also several other cases

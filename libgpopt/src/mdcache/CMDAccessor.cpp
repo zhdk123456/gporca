@@ -1032,7 +1032,7 @@ CMDAccessor::Pmdcast
 	pmdidSrc->AddRef();
 	pmdidDest->AddRef();
 	
-	CAutoP<IMDId> a_pmdidCast;
+	CAutoRef<IMDId> a_pmdidCast;
 	a_pmdidCast = GPOS_NEW(m_pmp) CMDIdCast(CMDIdGPDB::PmdidConvert(pmdidSrc), CMDIdGPDB::PmdidConvert(pmdidDest));
 	
 	const IMDCacheObject *pmdobj = Pimdobj(a_pmdidCast.Pt());
@@ -1041,7 +1041,6 @@ CMDAccessor::Pmdcast
 	{
 		GPOS_RAISE(gpdxl::ExmaMD, gpdxl::ExmiMDCacheEntryNotFound, a_pmdidCast->Wsz());
 	}
-	a_pmdidCast.PtReset()->Release();
 
 	return dynamic_cast<const IMDCast*>(pmdobj);
 }
@@ -1069,7 +1068,7 @@ CMDAccessor::Pmdsccmp
 	pmdidLeft->AddRef();
 	pmdidRight->AddRef();
 	
-	CAutoP<IMDId> a_pmdidScCmp;
+	CAutoRef<IMDId> a_pmdidScCmp;
 	a_pmdidScCmp = GPOS_NEW(m_pmp) CMDIdScCmp(CMDIdGPDB::PmdidConvert(pmdidLeft), CMDIdGPDB::PmdidConvert(pmdidRight), ecmpt);
 	
 	const IMDCacheObject *pmdobj = Pimdobj(a_pmdidScCmp.Pt());
@@ -1078,7 +1077,6 @@ CMDAccessor::Pmdsccmp
 	{
 		GPOS_RAISE(gpdxl::ExmaMD, gpdxl::ExmiMDCacheEntryNotFound, a_pmdidScCmp->Wsz());
 	}
-	a_pmdidScCmp.PtReset()->Release();
 
 	return dynamic_cast<const IMDScCmp*>(pmdobj);
 }
