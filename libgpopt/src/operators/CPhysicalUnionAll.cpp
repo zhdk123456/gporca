@@ -528,7 +528,7 @@ CPhysicalUnionAll::PdsRequired
 		return pds;
 	}
 
-	if (0 == ulOptReq)
+	if (1 == ulOptReq)
 	{
 		CDistributionSpecStrictHashed *pdshashed = NULL;
 

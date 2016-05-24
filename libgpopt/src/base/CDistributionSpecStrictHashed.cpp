@@ -89,9 +89,13 @@ CDistributionSpecStrictHashed::FSatisfies
 	)
 	const
 {	
+	if (FMatch(pdss))
+	{
+		return true;
+	}
+
 	if (EdtAny == pdss->Edt())
 	{
-		// a singleton distribution satisfies "any"
 		return true;
 	}
 	
